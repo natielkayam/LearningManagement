@@ -5,13 +5,15 @@ namespace LearningManagement.Services.CoursesAPI.Services.IServices
     public interface ICourseService
     {
         Task<List<CourseDto>> GetCoursesAsync();
-        Task<CourseDto> GetCourseByIdAsync(int id);
+        Task<CourseDto> GetCourseByIdAsync(string id);
         Task AddCourseAsync(CourseDto courseDto);
-        Task UpdateCourseAsync(CourseDto courseDto, int courseId);
-        Task RemoveCourseAsync(int courseId);
-        Task<List<StudentDto>> GetEnrolledStudentsAsync(int courseId);
-        Task EnrollStudentAsync(int courseId, StudentDto studentDto);
-        Task RemoveStudentEnrollmentAsync(int courseId, int studentId);
+        Task UpdateCourseAsync(CourseDto courseDto);
+        Task RemoveCourseAsync(string courseId);
+        Task<List<StudentDto>> GetEnrolledStudentsAsync(string courseId);
+        Task EnrollStudentAsync(string courseId, StudentDto studentDto);
+        Task RemoveStudentEnrollmentAsync(string courseId, string studentId);
+        Task<List<EnrollmentDto>> GetEnrollmentsAsync();
         Task<EnrollmentReportSummaryDto> GenerateEnrollmentReportWithSummaryAsync();
+        Task<string> SaveEnrollmentReportAsync(EnrollmentReportSummaryDto report);
     }
 }

@@ -7,5 +7,6 @@
         public string Region { get; set; }
         public string LogGroup { get; set; }
         public string LogStream { get; set; }
+        public string BucketName { get; set; }
     }
 }

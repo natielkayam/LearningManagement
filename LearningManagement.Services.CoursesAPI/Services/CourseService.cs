@@ -4,27 +4,28 @@ using LearningManagement.Services.CoursesAPI.Models;
 using LearningManagement.Services.CoursesAPI.Models.Dto;
 using LearningManagement.Services.CoursesAPI.Repositories;
 using LearningManagement.Services.CoursesAPI.Services.IServices;
+using Microsoft.Extensions.Options;
 
 namespace LearningManagement.Services.CoursesAPI.Services
 {
     public class CourseService : ICourseService
     {
         private readonly ICourseRepository _courseRepository;
-        private readonly ICourseEnrollmentRepository _courseEnrollmentRepository;
+        private readonly IEnrollmentRepository _courseEnrollmentRepository;
         private readonly IMapper _mapper;
-        private readonly CourseService _courseService;
-
+        private readonly IAwsService _awsService;
 
         public CourseService(ICourseRepository courseRepository,
-            ICourseEnrollmentRepository courseEnrollmentRepository,
-            IMapper mapper)
+            IEnrollmentRepository courseEnrollmentRepository,
+            IMapper mapper, IAwsService awsService)
         {
             _courseRepository = courseRepository;
             _courseEnrollmentRepository = courseEnrollmentRepository;
             _mapper = mapper;
+            _awsService = awsService;
         }
 
-        public async Task<CourseDto> GetCourseByIdAsync(int id)
+        public async Task<CourseDto> GetCourseByIdAsync(string id)
         {
             var course = await _courseRepository.GetByIdAsync(id);
             
@@ -52,9 +53,9 @@ namespace LearningManagement.Services.CoursesAPI.Services
             await _courseRepository.AddAsync(course);
         }
 
-        public async Task UpdateCourseAsync(CourseDto courseDto, int courseId)
+        public async Task UpdateCourseAsync(CourseDto courseDto)
         {
-            var courseExists = await _courseRepository.GetByIdAsync(courseId);
+            var courseExists = await _courseRepository.GetByIdAsync(courseDto.Id);
 
             if (courseExists == null)
             {
@@ -63,12 +64,12 @@ namespace LearningManagement.Services.CoursesAPI.Services
 
             var course = _mapper.Map<Course>(courseDto);
 
-            course.Id = courseId;
+            course.Id = courseDto.Id;
 
             await _courseRepository.UpdateAsync(course);
         }
 
-        public async Task RemoveCourseAsync(int courseId)
+        public async Task RemoveCourseAsync(string courseId)
         {
             var course = await _courseRepository.GetByIdAsync(courseId);
 
@@ -94,7 +95,7 @@ namespace LearningManagement.Services.CoursesAPI.Services
             return courseDtos;
         }
     
-        public async Task<List<StudentDto>> GetEnrolledStudentsAsync(int courseId)
+        public async Task<List<StudentDto>> GetEnrolledStudentsAsync(string courseId)
         {
             var course = await _courseRepository.GetByIdAsync(courseId);
 
@@ -110,7 +111,7 @@ namespace LearningManagement.Services.CoursesAPI.Services
             return studentsDto;
         }
 
-        public async Task EnrollStudentAsync(int courseId, StudentDto studentDto)
+        public async Task EnrollStudentAsync(string courseId, StudentDto studentDto)
         {
             var course = await _courseRepository.GetByIdAsync(courseId);
 
@@ -127,10 +128,13 @@ namespace LearningManagement.Services.CoursesAPI.Services
             }
 
             var student = _mapper.Map<Student>(studentDto);
+            
+            student.Id = studentDto.Id;
 
-            var courseEnrollment = new CourseEnrollment
+            var courseEnrollment = new Enrollment
             {
                 CourseId = courseId,
+                StudentId = student.Id,
                 Student = student,
                 EnrolledOn = DateTime.UtcNow
             };
@@ -138,7 +142,7 @@ namespace LearningManagement.Services.CoursesAPI.Services
             await _courseEnrollmentRepository.EnrollStudentAsync(courseEnrollment);
         }
 
-        public async Task RemoveStudentEnrollmentAsync(int courseId, int studentId)
+        public async Task RemoveStudentEnrollmentAsync(string courseId, string studentId)
         {
             var course = await _courseRepository.GetByIdAsync(courseId);
 
@@ -160,34 +164,68 @@ namespace LearningManagement.Services.CoursesAPI.Services
         public async Task<EnrollmentReportSummaryDto> GenerateEnrollmentReportWithSummaryAsync()
         {
             var courses = await _courseRepository.GetAllAsync();
-
-            var report = new List<EnrollmentReportDto>();
-
-            int totalEnrollments = 0;
-
-            foreach (var course in courses)
+            if (courses == null || !courses.Any())
             {
-                var students = await _courseEnrollmentRepository.GetEnrolledStudentsAsync(course.Id);
-                
-                totalEnrollments += students.Count;
-
-                report.Add(new EnrollmentReportDto
+                return new EnrollmentReportSummaryDto
                 {
-                    CourseTitle = course.Title,
-                    StudentCount = students.Count,
-                    Students = students.Select(s => _mapper.Map<StudentDto>(s)).ToList()
-                });
+                    TotalCourses = 0,
+                    TotalEnrollments = 0,
+                    CourseEnrollments = new List<EnrollmentReportDto>()
+                };
             }
 
-            // Sort courses by number of students descending
-            var sortedReport = report.OrderByDescending(r => r.StudentCount).ToList();
+            // Get all enrollments at once (if your repository supports it, better than querying per course)
+            var allEnrollments = await _courseEnrollmentRepository.GetEnrollmentsAsync();
+
+            // Group enrollments by course
+            var report = courses
+                .Select(course =>
+                {
+                    var courseEnrollments = allEnrollments
+                        .Where(e => e.CourseId == course.Id)
+                        .Select(e => _mapper.Map<EnrollmentDto>(e))
+                        .ToList();
+
+                    return new EnrollmentReportDto
+                    {
+                        CourseId = course.Id,
+                        CourseTitle = course.Title,
+                        StudentCount = courseEnrollments.Count,
+                        Students = courseEnrollments
+                    };
+                })
+                .OrderByDescending(r => r.StudentCount)  // Sort by number of students
+                .ToList();
 
             return new EnrollmentReportSummaryDto
             {
                 TotalCourses = courses.Count(),
-                TotalEnrollments = totalEnrollments,
-                CourseEnrollments = sortedReport
+                TotalEnrollments = report.Sum(r => r.StudentCount),
+                CourseEnrollments = report
             };
+        }
+
+        public async Task<List<EnrollmentDto>> GetEnrollmentsAsync()
+        {
+            var enrollments = await _courseEnrollmentRepository.GetEnrollmentsAsync();
+
+            if (enrollments == null)
+            {
+                throw new CourseEnrollmentNotFoundException();
+            }
+
+            var enrollmentsDtos = _mapper.Map<List<EnrollmentDto>>(enrollments);
+
+            return enrollmentsDtos;
+        }
+
+        public async Task<string> SaveEnrollmentReportAsync(EnrollmentReportSummaryDto report)
+        {
+            string key = $"reports/enrollment-report-{DateTime.UtcNow:yyyyMMddHHmmss}.json";
+            
+            var url = await _awsService.UploadJsonAsync(key, report);
+
+            return url;
         }
     }
 }
