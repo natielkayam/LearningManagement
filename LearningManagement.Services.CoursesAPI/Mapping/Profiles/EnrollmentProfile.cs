@@ -4,14 +4,11 @@ using LearningManagement.Services.CoursesAPI.Models.Dto;
 
 namespace LearningManagement.Services.CoursesAPI.Mapping.Profiles
 {
-    public class StudentProfile : Profile
+    public class EnrollmentProfile : Profile
     {
-        public StudentProfile()
+        public EnrollmentProfile()
         {
-            CreateMap<StudentDto, Student>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore());
-
-            CreateMap<Student, StudentDto>();
+            CreateMap<EnrollmentDto, Enrollment>().ReverseMap();
         }
     }
 }
