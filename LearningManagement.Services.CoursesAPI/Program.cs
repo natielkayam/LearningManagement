@@ -24,7 +24,7 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 
 builder.Services.AddScoped<ICourseRepository , CourseRepository>();
 
-builder.Services.AddScoped<ICourseEnrollmentRepository, CourseEnrollmentRepository>();
+builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -45,6 +45,10 @@ LoggingExtensions.ConfigureSerilog(awsSettings);
 
 builder.Host.UseSerilog();
 
+builder.Services.Configure<AwsSettings>(builder.Configuration.GetSection("AWS"));
+
+builder.Services.AddScoped<IAwsService, AwsService>();
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
@@ -55,6 +59,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("AllowAnyOrigin");
 
 app.UseHttpsRedirection();
 

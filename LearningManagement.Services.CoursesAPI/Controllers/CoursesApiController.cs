@@ -20,7 +20,7 @@ namespace LearningManagement.Services.CoursesAPI.Controllers
         }
 
         [HttpGet("get")]
-        public async Task<IActionResult> GetCourseById([FromQuery] int courseId)
+        public async Task<IActionResult> GetCourseById([FromQuery] string courseId)
         {
             try
             {
@@ -53,8 +53,8 @@ namespace LearningManagement.Services.CoursesAPI.Controllers
             }
         }
 
-        [HttpPost("add")]
-        public async Task<IActionResult> AddCourse([FromBody] CourseDto courseDto)
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateCourse([FromBody] CourseDto courseDto)
         {
             try
             {
@@ -71,11 +71,11 @@ namespace LearningManagement.Services.CoursesAPI.Controllers
         }
 
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateCourse([FromBody] CourseDto courseDto, int courseId)
+        public async Task<IActionResult> UpdateCourse([FromBody] CourseDto courseDto)
         {
             try
             {
-                await _courseService.UpdateCourseAsync(courseDto, courseId);
+                await _courseService.UpdateCourseAsync(courseDto);
 
                 return Ok();
             }
@@ -88,7 +88,7 @@ namespace LearningManagement.Services.CoursesAPI.Controllers
         }
 
         [HttpDelete("remove")]
-        public async Task<IActionResult> RemoveCourse([FromQuery] int courseId)
+        public async Task<IActionResult> RemoveCourse([FromQuery] string courseId)
         {
             try
             {
@@ -104,8 +104,8 @@ namespace LearningManagement.Services.CoursesAPI.Controllers
             }
         }
 
-        [HttpPost("assign")]
-        public async Task<IActionResult> EnrollStudent([FromQuery] int courseId, StudentDto studentDto)
+        [HttpPost("enrollment/assign")]
+        public async Task<IActionResult> EnrollStudent([FromQuery] string courseId, StudentDto studentDto)
         {
             try
             {
@@ -121,8 +121,8 @@ namespace LearningManagement.Services.CoursesAPI.Controllers
             }
         }
 
-        [HttpDelete("remove-enrollment")]
-        public async Task<IActionResult> RemoveStudentEnrollment([FromQuery] int courseId, [FromQuery] int studentId)
+        [HttpDelete("enrollment/unassign")]
+        public async Task<IActionResult> UnassignStudentEnrollment([FromQuery] string courseId, [FromQuery] string studentId)
         {
             try
             {
@@ -138,8 +138,8 @@ namespace LearningManagement.Services.CoursesAPI.Controllers
             }
         }
 
-        [HttpGet("enrolled-students")]
-        public async Task<IActionResult> GetEnrolledStudents([FromQuery] int courseId)
+        [HttpGet("enrollment/students")]
+        public async Task<IActionResult> GetEnrolledStudents([FromQuery] string courseId)
         {
             try
             {
@@ -155,22 +155,55 @@ namespace LearningManagement.Services.CoursesAPI.Controllers
             }
         }
 
-        [HttpGet("enrollment-report-summary")]
+        [HttpGet("enrollment/get-all")]
+        public async Task<IActionResult> GetEnrollements()
+        {
+            try
+            {
+                var enrollments = await _courseService.GetEnrollmentsAsync();
+
+                return Ok(enrollments);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving enrollments");
+
+                return BadRequest(ex.Message.ToString());
+            }
+        }
+
+        [HttpGet("enrollment/report")]
         public async Task<IActionResult> GetEnrollmentReportSummary()
         {
             try
             {
                 var report = await _courseService.GenerateEnrollmentReportWithSummaryAsync();
-                
+
                 return Ok(report);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating enrollment report summary");
-                
+
                 return BadRequest(ex.Message);
             }
         }
 
+        [HttpPost("reports/save-to-s3")]
+        public async Task<IActionResult> SaveEnrollmentReportToS3([FromBody] EnrollmentReportSummaryDto enrollmentReportSummaryDto)
+        {
+            try
+            {
+                var url = await _courseService.SaveEnrollmentReportAsync(enrollmentReportSummaryDto);
+
+                return Ok(url);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving enrollment report to S3");
+
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
