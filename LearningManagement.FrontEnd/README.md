@@ -1,73 +1,75 @@
-# React + TypeScript + Vite
+## Learning Management Frontend (React + Vite + TypeScript)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A SPA for managing courses, enrollments, and reports with a consistent UX layer (dialogs, toasts, loading).
 
-Currently, two official plugins are available:
+### Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+#### Prerequisites
+- Node.js 18+ (20+ recommended)
+- npm
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+#### Setup
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+A `.env` file is already included. Verify it points to your backend:
+```bash
+VITE_BASE_API_URL_COURSE=https://localhost:7000/api/courses
 ```
+
+#### Run
+```bash
+npm run dev
+```
+Open the printed local URL (usually `http://localhost:5173`).
+
+#### Build & Preview
+```bash
+npm run build
+npm run preview
+```
+
+### Project Structure
+- `src/app/providers`
+  - `Providers.tsx` — wires core providers
+  - `DialogProvider`, `LoadingProvider`, `ToastProvider` — cross-cutting UX
+  - `hooks` — `useDialog`, `useLoading`, `useToast`
+- `src/routes` — `AppRoutes`, `ScrollToTop`
+- `src/domains`
+  - `courses`
+    - `components` — feature UI (courses listing, enrollments, reports)
+    - `hooks` — `useCourse`, `useCourseService`, `useEnrollmentReport`
+    - `services` — `CourseService` with Axios instance
+    - `schemas` — `CourseSchema`
+    - `types` — DTOs shared at the UI layer
+  - `client` — landing and shared client-facing components
+- `src/shared/components/ui/Theme` — app theme and UI building blocks
+- `src/shared/http/httpClient.ts` — base HTTP client
+
+### Design Decisions
+- **Feature-first structure**: Domains encapsulate components, hooks, services, and types.
+- **Service + hook pattern**: Services encapsulate remote calls; hooks manage component-level data fetching and state.
+- **Provider-based UX**: Dialog, Toast, and Loading providers standardize user feedback and interactions.
+- **Type-safe UI**: DTO and schema types keep UI contracts explicit.
+
+### Configuration
+- `VITE_BASE_API_URL_COURSE` is required to point the app to the Courses API.
+- Adjust theme and UI customizations under `shared/components/ui/Theme`.
+
+### Trade-offs and Improvements
+- **State management**: Local hooks and providers are sufficient now; for cross-screen state or offline caching, will use Redux.
+- **Error handling**: Centralize API error normalization and map to user-friendly toasts/dialogs.
+- **Auth**: When the backend adds JWT:
+  - Store tokens securely (in-memory with refresh flow or secure cookies).
+  - Add an auth provider and Axios interceptors for token refresh.
+  - Derive identity-driven views (e.g., student vs admin).
+- **Accessibility**: Expand a11y testing and keyboard navigation coverage.
+- **Testing**: Add component and integration tests (Vitest/RTL), contract tests against mocked API.
+- **Performance**: Code-split large routes and virtualize large tables if needed.
+
+### Scripts
+- `npm run dev` — start dev server
+- `npm run build` — production build
+- `npm run preview` — preview production build
+- `npm run lint` — lint code (if configured in the project)
