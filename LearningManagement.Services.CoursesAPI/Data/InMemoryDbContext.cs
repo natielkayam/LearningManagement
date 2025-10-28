@@ -5,19 +5,19 @@ namespace LearningManagement.Services.CoursesAPI.Data
     public class InMemoryDbContext
     {
         public List<Course> Courses { get; }
-        public List<CourseEnrollment> CourseEnrollments { get; }
+        public List<Enrollment> Enrollments { get; }
 
         private int _courseId = 1;
-        private int _courseEnrollmentId = 1;
+        private int _enrollmentId = 1;
 
         public InMemoryDbContext()
         {
             Courses = new List<Course>();
 
-            CourseEnrollments = new List<CourseEnrollment>();
+            Enrollments = new List<Enrollment>();
         }
 
-        public int GenerateCourseId() => _courseId++;
-        public int GenerateCourseEnrollmentId() => _courseEnrollmentId++;
+        public string GenerateCourseId() => _courseId++.ToString();
+        public string GenerateCourseEnrollmentId() => _enrollmentId++.ToString();
     }
 }

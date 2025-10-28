@@ -2,8 +2,9 @@
 {
     public class EnrollmentReportDto
     {
+        public string CourseId { get; set; }
         public string CourseTitle { get; set; } = string.Empty;
         public int StudentCount { get; set; }
-        public List<StudentDto> Students { get; set; } = new();
+        public List<EnrollmentDto> Students { get; set; } = new();
     }
 }

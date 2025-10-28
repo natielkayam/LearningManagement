@@ -1,10 +1,10 @@
 ﻿namespace LearningManagement.Services.CoursesAPI.Models
 {
-    public class CourseEnrollment
+    public class Enrollment
     {
-        public int Id { get; set; }
-        public int CourseId { get; set; }
-        public int StudentId { get; set; }
+        public string Id { get; set; }
+        public string CourseId { get; set; }
+        public string StudentId { get; set; }
         public Student Student { get; set; }
         public DateTime EnrolledOn { get; set; }
     }

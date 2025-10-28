@@ -19,7 +19,7 @@ namespace LearningManagement.Services.CoursesAPI.Repositories
             return Task.FromResult<IEnumerable<Course>>(courses);
         }
 
-        public Task<Course?> GetByIdAsync(int id)
+        public Task<Course?> GetByIdAsync(string id)
         {
             var course = _context.Courses.FirstOrDefault(c => c.Id == id);
 
@@ -57,13 +57,13 @@ namespace LearningManagement.Services.CoursesAPI.Repositories
             return Task.CompletedTask;
         }
 
-        public Task RemoveAsync(int id)
+        public Task RemoveAsync(string id)
         {
             var course = _context.Courses.FirstOrDefault(c => c.Id == id);
 
             _context.Courses.Remove(course);
             
-            _context.CourseEnrollments.RemoveAll(e => e.CourseId == id);
+            _context.Enrollments.RemoveAll(e => e.CourseId == id);
 
             return Task.CompletedTask;
         }
