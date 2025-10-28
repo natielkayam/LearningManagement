@@ -69,3 +69,7 @@ This repository contains:
 - **Observability**: Centralized logging (Serilog), metrics and tracing (OpenTelemetry) and cloudwatch for aws.
 - **Security**: JWT validation, authorization policies, rate limiting, CORS hardening.
 - **DX**: Docker Compose for local orchestration; CI/CD with build, tests, and linting gates.
+
+
+<img width="1902" height="932" alt="image" src="https://github.com/user-attachments/assets/ac02928a-7a08-4c95-85e1-44b0e0821cd7" />
+
