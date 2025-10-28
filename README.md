@@ -1,4 +1,4 @@
-## Learning Management (Monorepo)
+## Learning Management
 
 This repository contains:
 - `LearningManagement.Services.CoursesAPI`: .NET 8 Web API microservice for Courses and Enrollments
